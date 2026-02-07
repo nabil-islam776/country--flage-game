@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Country Flag Battle (IMG)</title>
+<style>
+body{
+  margin:0;
+  background:#071a2b;
+  color:#fff;
+  font-family:Arial;
+  text-align:center;
+}
+h2{margin:10px}
+
+#arena{
+  width:360px;
+  height:360px;
+  border:6px solid #2fa4ff;
+  border-radius:50%;
+  margin:10px auto;
+  position:relative;
+}
+
+.flag{
+  position:absolute;
+  width:40px;
+  height:26px;
+}
+
+.controls{
+  margin:8px;
+}
+.controls button{
+    border: none;
+    color: #fff;
+    background: #2fa4ff;
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+button, input[type=range]{
+  margin:5px;
+  padding:5px 10px;
+  font-size:14px;
+}
+
+#winner{
+  margin-top:10px;
+  font-size:20px;
+  color:gold;
+}
+
+</style>
+</head>
+<body>
+
+<h2>🌍 Country Battle (Image Flags)</h2>
+
+<div class="controls">
+  Speed: <input type="range" min="1" max="20" value="8" id="speed">
+</div>
+
+<div id="arena"></div>
+<div id="winner"></div>
+<div class="controls">
+  <button id="battleBtn">Start Battle</button>
+</div>
+
+<script>
+const countries = [
+ {code:"bd",name:"Bangladesh"},
+ {code:"in",name:"India"},
+ {code:"pk",name:"Pakistan"},
+ {code:"br",name:"Brazil"},
+ {code:"us",name:"USA"},
+ {code:"fr",name:"France"},
+ {code:"de",name:"Germany"},
+ {code:"ar",name:"Argentina"},
+ {code:"jp",name:"Japan"},
+ {code:"tr",name:"Turkey"},
+ {code:"cn",name:"China"},
+ {code:"sa",name:"Saudi"},
+ {code:"it",name:"Italy"},
+ {code:"es",name:"Spain"},
+ {code:"pt",name:"Portugal"},
+ {code:"nl",name:"Netherlands"},
+ {code:"eg",name:"Egypt"},
+ {code:"ng",name:"Nigeria"},
+ {code:"kr",name:"Korea"},
+ {code:"gb",name:"UK"}
+];
+
+const arena = document.getElementById("arena");
+const speedInput = document.getElementById("speed");
+const battleBtn = document.getElementById("battleBtn");
+
+let active = [...countries];
+let nodes = [];
+let speed = 8;
+let moveInt = null;
+let outInt = null;
+let running = false;
+
+// Draw all flags first
+function draw(){
+  arena.innerHTML="";
+  nodes=[];
+  active.forEach(c=>{
+    let img = document.createElement("img");
+    img.className="flag";
+    img.src = `https://flagcdn.com/w40/${c.code}.png`;
+    img.title = c.name;
+    arena.appendChild(img);
+    nodes.push(img);
+  });
+}
+draw(); // <-- only draw, no movement yet
+
+speedInput.oninput = ()=> speed = speedInput.value;
+
+function move(){
+  let arenaRadius = 180; 
+  let flagW = 40;
+  let flagH = 26;
+  let r = arenaRadius - Math.max(flagW, flagH)/2 - 6;
+  let cx = arenaRadius;
+  let cy = arenaRadius;
+
+  nodes.forEach((el,i)=>{
+    let a = Date.now()/(1000/speed) + i*2*Math.PI/nodes.length;
+    el.style.left = cx + r*Math.cos(a) - flagW/2 + "px";
+    el.style.top  = cy + r*Math.sin(a) - flagH/2 + "px";
+  });
+}
+
+// Button logic: start/pause/resume/restart
+battleBtn.onclick = () => {
+  if(!running && active.length > 1){
+    running = true;
+    battleBtn.innerText = "Pause Battle";
+
+    // Start movement
+    moveInt = setInterval(move,40);
+
+    // Start eliminating
+    outInt = setInterval(()=>{
+      if(active.length <= 1){
+        clearInterval(moveInt);
+        clearInterval(outInt);
+        running = false;
+        battleBtn.innerText = "Restart Battle";
+        document.getElementById("winner").innerText =
+          "🏆 Winner: " + active[0].name;
+        return;
+      }
+      active.splice(Math.floor(Math.random()*active.length),1);
+      draw();
+    },1500);
+
+  } else if(running){
+    // Pause battle
+    running = false;
+    battleBtn.innerText = "Resume Battle";
+    clearInterval(moveInt);
+    clearInterval(outInt);
+  } else if(!running && active.length <= 1){
+    // Restart battle
+    active = [...countries];
+    draw();
+    document.getElementById("winner").innerText = "";
+    battleBtn.innerText = "Start Battle";
+  }
+};
+</script>
+
+</body>
+</html>
+
